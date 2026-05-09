@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To Do List 📋</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- CALENDAR SECTION -->
+<div class="calendar-section">
+  <div class="calendar-title">📅 Calendar</div>
+  <div class="calendar-strip" id="calStrip">
+    <span class="cal-label" id="calMonthYearLabel">— May 2026 —</span>
+    <button class="month-btn" id="monthPickerBtn" title="Pick month/year">▾</button>
+  </div>
+</div>
+
+<!-- DATE ROW -->
+<div class="date-row" id="dateRow"></div>
+
+<!-- TODO CARD -->
+<div class="todo-card">
+  <div class="todo-header">To Do List 📋</div>
+
+  <div class="input-row">
+    <input class="task-input" id="taskInput" type="text" placeholder="write your task...." maxlength="120" />
+    <button class="add-btn" id="addBtn">➕ Add</button>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+  <div class="task-list" id="taskList"></div>
+</div>
+
+<!-- DELETE POPUP -->
+<div class="overlay" id="deleteOverlay">
+  <div class="popup">
+    <div class="popup-icon">🗑️</div>
+    <div class="popup-title">Delete Task?</div>
+    <div class="popup-msg">Are you sure you want to delete this task? This action cannot be undone.</div>
+    <div class="popup-task-preview" id="popupTaskText"></div>
+    <div class="popup-btns">
+      <button class="popup-no" id="popupNo">✖ No, Keep</button>
+      <button class="popup-yes" id="popupYes">✔ Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH PICKER -->
+<div class="month-overlay" id="monthOverlay">
+  <div class="month-popup">
+    <h3>Select Month &amp; Year</h3>
+    <div class="month-grid" id="monthGrid"></div>
+    <div class="year-row">
+      <button class="year-arrow" id="yearDown">◀</button>
+      <span class="year-display" id="yearDisplay"></span>
+      <button class="year-arrow" id="yearUp">▶</button>
+    </div>
+    <button class="month-close" id="monthClose">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
