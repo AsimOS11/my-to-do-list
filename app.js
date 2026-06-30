@@ -23,7 +23,7 @@ let pendingDeleteId    = null;
 let pendingDeleteIsDue = false;
 let pickerYear  = viewYear;
 let dueVisible  = false;
-let dragSourceId = null;
+
 
 // ── DATE HELPERS ──
 function getCurrentKey() { return dateKey(viewYear, viewMonth, selectedDay); }
@@ -145,13 +145,13 @@ function renderTasks() {
     box.appendChild(lbl);
 
     for (let i = 0; i < topCount; i++) {
-      box.appendChild(buildTaskEl(regularTasks[i], false));
+      box.appendChild(buildTaskEl(regularTasks[i], false, i, regularTasks.length));
     }
     list.appendChild(box);
 
     // Remaining tasks sit below the box
     for (let i = topCount; i < regularTasks.length; i++) {
-      list.appendChild(buildTaskEl(regularTasks[i], false));
+      list.appendChild(buildTaskEl(regularTasks[i], false, i, regularTasks.length));
     }
   }
 
@@ -194,56 +194,33 @@ function renderTasks() {
 }
 
 // ── BUILD TASK ELEMENT ──
-function buildTaskEl(task, isDueItem) {
+function buildTaskEl(task, isDueItem, index = 0, total = 1) {
   const item = document.createElement('div');
   item.className = 'task-item' + (task.done ? ' done' : '') + (isDueItem ? ' due-item' : '');
   item.dataset.id = task.id;
 
-  // ── Drag handle (regular tasks only) ──
+  // ── ↑↓ Order buttons (works on mobile + desktop, replaces drag) ──
   if (!isDueItem) {
-    const handle = document.createElement('span');
-    handle.className = 'drag-handle';
-    handle.textContent = '⠿';
-    handle.title = 'Drag to reorder priority';
-    handle.setAttribute('draggable', 'true');
+    const orderBtns = document.createElement('div');
+    orderBtns.className = 'order-btns';
 
-    handle.addEventListener('dragstart', e => {
-      dragSourceId = task.id;
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', task.id);
-      // Use the whole row as the drag ghost image
-      try { e.dataTransfer.setDragImage(item, 24, 14); } catch(err) {}
-      setTimeout(() => item.classList.add('dragging'), 0);
-    });
+    const upBtn = document.createElement('button');
+    upBtn.className = 'order-btn';
+    upBtn.textContent = '▲';
+    upBtn.title = 'Move up — higher priority';
+    upBtn.disabled = (index === 0);
+    upBtn.addEventListener('click', () => moveTask(task.id, -1));
 
-    handle.addEventListener('dragend', () => {
-      document.querySelectorAll('.task-item').forEach(el =>
-        el.classList.remove('dragging', 'drag-over'));
-      dragSourceId = null;
-    });
+    const downBtn = document.createElement('button');
+    downBtn.className = 'order-btn';
+    downBtn.textContent = '▼';
+    downBtn.title = 'Move down — lower priority';
+    downBtn.disabled = (index === total - 1);
+    downBtn.addEventListener('click', () => moveTask(task.id, 1));
 
-    item.appendChild(handle);
-
-    // Drop target events on the whole row
-    item.addEventListener('dragover', e => {
-      if (!dragSourceId || dragSourceId === task.id) return;
-      e.preventDefault();
-      document.querySelectorAll('.task-item').forEach(el => el.classList.remove('drag-over'));
-      item.classList.add('drag-over');
-    });
-
-    item.addEventListener('dragleave', e => {
-      // Only remove if truly leaving the item (not entering a child)
-      if (!e.relatedTarget || !item.contains(e.relatedTarget))
-        item.classList.remove('drag-over');
-    });
-
-    item.addEventListener('drop', e => {
-      e.preventDefault();
-      item.classList.remove('drag-over');
-      if (!dragSourceId || dragSourceId === task.id) return;
-      doReorder(dragSourceId, task.id);
-    });
+    orderBtns.appendChild(upBtn);
+    orderBtns.appendChild(downBtn);
+    item.appendChild(orderBtns);
   }
 
   // ── Checkbox ──
@@ -299,21 +276,18 @@ function buildTaskEl(task, isDueItem) {
   return item;
 }
 
-// ── DRAG REORDER ──
-// Moves srcId to the position just before tgtId in the regular task array.
-function doReorder(srcId, tgtId) {
+// ── MOVE TASK UP / DOWN ──
+function moveTask(id, direction) {
   const tasks   = getTasks();
   const regular = tasks.filter(t => !t.isDue);
   const due     = tasks.filter(t => t.isDue);
 
-  const srcIdx = regular.findIndex(t => t.id === srcId);
-  if (srcIdx === -1) return;
+  const idx    = regular.findIndex(t => t.id === id);
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= regular.length) return;
 
-  const [moved] = regular.splice(srcIdx, 1);
-  const newTgtIdx = regular.findIndex(t => t.id === tgtId);
-  if (newTgtIdx === -1) regular.push(moved);
-  else regular.splice(newTgtIdx, 0, moved);
-
+  // Swap the two positions
+  [regular[idx], regular[newIdx]] = [regular[newIdx], regular[idx]];
   saveTasks([...regular, ...due]);
   renderTasks();
 }
