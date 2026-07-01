@@ -286,16 +286,23 @@ function moveTask(id, direction) {
   const newIdx = idx + direction;
   if (newIdx < 0 || newIdx >= regular.length) return;
 
-  // Save scroll position before DOM rebuild (prevents jump-to-top on mobile)
-  const scrollY = window.scrollY;
+  // Root cause on iOS Safari: when the tapped button is removed from the DOM,
+  // the browser scrolls to top trying to find the now-missing focused element.
+  // Fix: blur BEFORE destroying DOM so iOS has nothing to scroll to.
+  const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  if (document.activeElement) document.activeElement.blur();
 
   // Swap the two positions
   [regular[idx], regular[newIdx]] = [regular[newIdx], regular[idx]];
   saveTasks([...regular, ...due]);
   renderTasks();
 
-  // Restore scroll position immediately after render
-  window.scrollTo({ top: scrollY, behavior: 'instant' });
+  // Belt-and-suspenders scroll restore at 0ms, 16ms, 50ms
+  // covers iOS Safari, Android Chrome, and slow-paint edge cases.
+  window.scrollTo(0, scrollY);
+  setTimeout(() => window.scrollTo(0, scrollY), 0);
+  setTimeout(() => window.scrollTo(0, scrollY), 16);
+  setTimeout(() => window.scrollTo(0, scrollY), 50);
 }
 
 // ── ADD TASK ──
