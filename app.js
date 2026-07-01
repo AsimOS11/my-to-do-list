@@ -286,10 +286,16 @@ function moveTask(id, direction) {
   const newIdx = idx + direction;
   if (newIdx < 0 || newIdx >= regular.length) return;
 
+  // Save scroll position before DOM rebuild (prevents jump-to-top on mobile)
+  const scrollY = window.scrollY;
+
   // Swap the two positions
   [regular[idx], regular[newIdx]] = [regular[newIdx], regular[idx]];
   saveTasks([...regular, ...due]);
   renderTasks();
+
+  // Restore scroll position immediately after render
+  window.scrollTo({ top: scrollY, behavior: 'instant' });
 }
 
 // ── ADD TASK ──
